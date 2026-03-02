@@ -1,47 +1,46 @@
-// ManageProducts.jsx — Blue & White Professional Redesign (all errors fixed)
+// ManageProducts.jsx — Dark theme with black background, enhanced error handling
+// Back button now goes to the previous page (history back)
 import { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { getProducts, createProduct, updateProduct, deleteProduct } from '../services/api';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom'; // 👈 changed from Link
 
-/* ─── INJECT STYLES ──────────────────────────────────────────── */
+/* ─── INJECT STYLES (dark theme) ────────────────────────────── */
 const injectStyles = () => {
-  if (document.getElementById('mp-css')) return;
+  if (document.getElementById('mp-css-dark')) return;
   const s = document.createElement('style');
-  s.id = 'mp-css';
+  s.id = 'mp-css-dark';
   s.textContent = `
     @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Syne:wght@600;700;800&display=swap');
 
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg:        #f0f4fb;
-      --bg-2:      #ffffff;
-      --bg-3:      #e8eef8;
-      --border:    #dce6f5;
-      --border-2:  #b8ccee;
-      --ink:       #0f1c3a;
-      --ink-2:     #4a5e82;
-      --ink-3:     #8fa3c8;
-      --blue:      #1e4fd8;
-      --blue-2:    #2563eb;
-      --blue-3:    #3b82f6;
-      --blue-lt:   #dbeafe;
-      --blue-xlt:  #eff6ff;
-      --blue-glow: rgba(37,99,235,.18);
+      --bg:        #0a0a0a;
+      --bg-2:      #1a1a1a;
+      --bg-3:      #2a2a2a;
+      --border:    #333333;
+      --border-2:  #444444;
+      --ink:       #ffffff;
+      --ink-2:     #cccccc;
+      --ink-3:     #888888;
+      --primary:   #ffffff;
+      --primary-dim: #dddddd;
+      --primary-lt: rgba(255,255,255,0.1);
+      --primary-glow: rgba(255,255,255,0.15);
       --red:       #ef4444;
-      --red-lt:    #fee2e2;
-      --red-2:     #dc2626;
+      --red-lt:    #442222;
+      --red-2:     #ff6b6b;
       --green:     #10b981;
-      --green-lt:  #d1fae5;
+      --green-lt:  #1a3a2a;
       --amber:     #f59e0b;
-      --amber-lt:  #fef3c7;
+      --amber-lt:  #3a2e1a;
       --radius:    12px;
       --radius-lg: 18px;
       --radius-xl: 24px;
-      --shadow-sm: 0 1px 6px rgba(30,79,216,.06);
-      --shadow:    0 4px 20px rgba(30,79,216,.1);
-      --shadow-lg: 0 16px 48px rgba(30,79,216,.14);
+      --shadow-sm: 0 1px 6px rgba(0,0,0,0.5);
+      --shadow:    0 4px 20px rgba(0,0,0,0.6);
+      --shadow-lg: 0 16px 48px rgba(0,0,0,0.8);
     }
 
     html, body { background: var(--bg); }
@@ -65,12 +64,13 @@ const injectStyles = () => {
       display: inline-flex; align-items: center; gap: 6px;
       padding: 8px 18px; border-radius: 100px;
       border: 1.5px solid var(--border-2);
-      background: var(--bg-2); color: var(--blue-2);
+      background: var(--bg-2); color: var(--ink-2);
       font-family: 'Plus Jakarta Sans', sans-serif;
       font-size: 13px; font-weight: 600;
       text-decoration: none; transition: all .18s;
+      cursor: pointer; /* 👈 added because it's now a button */
     }
-    .mp-back-btn:hover { background: var(--blue-xlt); border-color: var(--blue-2); box-shadow: var(--shadow-sm); }
+    .mp-back-btn:hover { background: var(--bg-3); border-color: var(--ink-2); color: var(--ink); }
     .mp-page-title {
       font-family: 'Syne', sans-serif;
       font-size: clamp(20px, 4vw, 28px);
@@ -94,8 +94,8 @@ const injectStyles = () => {
       display: flex; align-items: center; gap: 5px;
       transition: all .18s; color: var(--ink-2);
     }
-    .mp-lang-btn:hover { border-color: var(--blue-2); color: var(--blue-2); background: var(--blue-xlt); }
-    .mp-logout-btn:hover { border-color: var(--red); color: var(--red); background: var(--red-lt); }
+    .mp-lang-btn:hover { border-color: var(--ink); color: var(--ink); background: var(--bg-2); }
+    .mp-logout-btn:hover { border-color: var(--red); color: var(--red-2); background: var(--red-lt); }
     .mp-lang-dropdown {
       position: absolute; top: calc(100% + 8px); right: 0;
       width: 150px; background: var(--bg-2);
@@ -108,10 +108,10 @@ const injectStyles = () => {
       font-size: 13px; font-weight: 500; cursor: pointer;
       transition: all .13s; color: var(--ink-2);
     }
-    .mp-lang-opt:hover, .mp-lang-opt.sel { background: var(--blue-xlt); color: var(--blue-2); }
+    .mp-lang-opt:hover, .mp-lang-opt.sel { background: var(--bg-3); color: var(--ink); }
     .mp-avatar {
       width: 34px; height: 34px; border-radius: 100%;
-      background: var(--blue-2); color: #fff;
+      background: var(--ink); color: var(--bg);
       font-weight: 800; font-size: 14px;
       display: flex; align-items: center; justify-content: center;
       flex-shrink: 0;
@@ -135,7 +135,7 @@ const injectStyles = () => {
       top: 0; left: 0; right: 0; height: 3px;
       border-radius: var(--radius-lg) var(--radius-lg) 0 0;
     }
-    .mp-stat.blue::after { background: var(--blue-2); }
+    .mp-stat.blue::after { background: var(--ink); }
     .mp-stat.amber::after { background: var(--amber); }
     .mp-stat.green::after { background: var(--green); }
     .mp-stat-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: var(--ink-3); margin-bottom: 6px; }
@@ -159,12 +159,13 @@ const injectStyles = () => {
     .mp-add-btn {
       display: inline-flex; align-items: center; gap: 6px;
       padding: 10px 20px; border-radius: 100px;
-      background: var(--blue-2); border: none; color: #fff;
+      background: var(--ink); border: none; color: var(--bg);
       font-family: 'Plus Jakarta Sans', sans-serif;
       font-size: 13px; font-weight: 700; cursor: pointer;
-      transition: all .18s; box-shadow: 0 4px 14px var(--blue-glow);
+      transition: all .18s; box-shadow: 0 4px 14px var(--primary-glow);
     }
-    .mp-add-btn:hover { background: var(--blue); transform: translateY(-1px); box-shadow: 0 6px 20px var(--blue-glow); }
+    .mp-add-btn:hover { background: var(--primary-dim); transform: translateY(-1px); box-shadow: 0 6px 20px var(--primary-glow); }
+    .mp-add-btn:disabled { opacity: 0.5; cursor: not-allowed; pointer-events: none; }
 
     /* ── TABLE ── */
     .mp-table-wrap { overflow-x: auto; }
@@ -177,18 +178,18 @@ const injectStyles = () => {
     }
     .mp-table tbody tr { border-bottom: 1px solid var(--bg-3); transition: background .14s; }
     .mp-table tbody tr:last-child { border-bottom: none; }
-    .mp-table tbody tr:hover { background: var(--blue-xlt); }
+    .mp-table tbody tr:hover { background: var(--bg-3); }
     .mp-table td { padding: 13px 14px; color: var(--ink-2); vertical-align: middle; }
     .mp-table td.bold { font-weight: 700; color: var(--ink); }
-    .mp-table td.mono { font-family: 'Syne', sans-serif; font-weight: 700; color: var(--blue-2); }
+    .mp-table td.mono { font-family: 'Syne', sans-serif; font-weight: 700; color: var(--ink); }
     .mp-qty-badge {
       display: inline-flex; align-items: center;
       padding: 3px 10px; border-radius: 100px;
       font-size: 12px; font-weight: 700; border: 1.5px solid;
     }
-    .mp-qty-badge.ok { background: var(--green-lt); color: #047857; border-color: #a7f3d0; }
-    .mp-qty-badge.low { background: var(--amber-lt); color: #92400e; border-color: #fcd34d; }
-    .mp-qty-badge.empty { background: var(--red-lt); color: var(--red-2); border-color: #fca5a5; }
+    .mp-qty-badge.ok { background: var(--green-lt); color: var(--green); border-color: #2a5a3a; }
+    .mp-qty-badge.low { background: var(--amber-lt); color: var(--amber); border-color: #5a4a2a; }
+    .mp-qty-badge.empty { background: var(--red-lt); color: var(--red-2); border-color: #5a2a2a; }
     .mp-btn-edit, .mp-btn-delete {
       display: inline-flex; align-items: center; gap: 4px;
       padding: 6px 13px; border-radius: 100px;
@@ -196,16 +197,16 @@ const injectStyles = () => {
       font-size: 12px; font-weight: 700; cursor: pointer; border: 1.5px solid;
       transition: all .15s;
     }
-    .mp-btn-edit { color: var(--blue-2); border-color: var(--blue-lt); background: var(--blue-xlt); }
-    .mp-btn-edit:hover { background: var(--blue-2); color: #fff; border-color: var(--blue-2); }
-    .mp-btn-delete { color: var(--red); border-color: #fca5a5; background: var(--red-lt); }
+    .mp-btn-edit { color: var(--ink); border-color: var(--border-2); background: var(--bg-3); }
+    .mp-btn-edit:hover { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+    .mp-btn-delete { color: var(--red-2); border-color: #5a2a2a; background: var(--red-lt); }
     .mp-btn-delete:hover { background: var(--red); color: #fff; border-color: var(--red); }
     .mp-empty { text-align: center; padding: 48px 0; color: var(--ink-3); font-size: 14px; }
 
     /* ── MODAL ── */
     .mp-overlay {
       position: fixed; inset: 0;
-      background: rgba(15,28,58,.3); backdrop-filter: blur(8px);
+      background: rgba(0,0,0,0.8); backdrop-filter: blur(8px);
       display: flex; align-items: center; justify-content: center;
       z-index: 999; animation: mp-fade .2s ease;
     }
@@ -230,7 +231,7 @@ const injectStyles = () => {
       color: var(--ink-3); border-bottom: 3px solid var(--border);
       transition: all .2s;
     }
-    .mp-step.active { color: var(--blue-2); border-bottom-color: var(--blue-2); }
+    .mp-step.active { color: var(--ink); border-bottom-color: var(--ink); }
     .mp-step.done { color: var(--green); border-bottom-color: var(--green); }
 
     /* ── FORM ── */
@@ -246,18 +247,18 @@ const injectStyles = () => {
       outline: none; transition: all .18s;
     }
     .mp-input:focus, .mp-textarea:focus, .mp-select:focus {
-      border-color: var(--blue-2); background: var(--bg-2);
-      box-shadow: 0 0 0 3px var(--blue-lt);
+      border-color: var(--ink); background: var(--bg-2);
+      box-shadow: 0 0 0 3px rgba(255,255,255,0.1);
     }
     .mp-textarea { min-height: 90px; resize: vertical; border-radius: var(--radius); }
-    .mp-error { font-size: 11px; color: var(--red); font-weight: 600; margin-top: 5px; display: flex; align-items: center; gap: 4px; }
+    .mp-error { font-size: 11px; color: var(--red-2); font-weight: 600; margin-top: 5px; display: flex; align-items: center; gap: 4px; }
 
     /* ── SUMMARY BOX ── */
-    .mp-summary { background: var(--blue-xlt); border: 1.5px solid var(--blue-lt); border-radius: var(--radius-lg); padding: 16px 18px; margin-bottom: 4px; }
-    .mp-summary-row { display: flex; justify-content: space-between; align-items: center; padding: 7px 0; border-bottom: 1px solid var(--blue-lt); }
+    .mp-summary { background: var(--bg-3); border: 1.5px solid var(--border); border-radius: var(--radius-lg); padding: 16px 18px; margin-bottom: 4px; }
+    .mp-summary-row { display: flex; justify-content: space-between; align-items: center; padding: 7px 0; border-bottom: 1px solid var(--border); }
     .mp-summary-row:last-child { border-bottom: none; }
     .mp-summary-key { font-size: 12px; font-weight: 700; color: var(--ink-3); text-transform: uppercase; letter-spacing: .06em; }
-    .mp-summary-val { font-size: 14px; font-weight: 600; color: var(--blue); }
+    .mp-summary-val { font-size: 14px; font-weight: 600; color: var(--ink); }
 
     /* ── MODAL BUTTONS ── */
     .mp-modal-btns { display: flex; gap: 10px; justify-content: flex-end; margin-top: 24px; flex-wrap: wrap; }
@@ -267,11 +268,11 @@ const injectStyles = () => {
       font-size: 13px; font-weight: 700; cursor: pointer;
       transition: all .18s; border: 1.5px solid;
     }
-    .mp-btn-primary { background: var(--blue-2); color: #fff; border-color: var(--blue-2); box-shadow: 0 4px 12px var(--blue-glow); }
-    .mp-btn-primary:hover { background: var(--blue); transform: translateY(-1px); box-shadow: 0 6px 18px var(--blue-glow); }
+    .mp-btn-primary { background: var(--ink); color: var(--bg); border-color: var(--ink); box-shadow: 0 4px 12px var(--primary-glow); }
+    .mp-btn-primary:hover { background: var(--primary-dim); transform: translateY(-1px); box-shadow: 0 6px 18px var(--primary-glow); }
     .mp-btn-secondary { background: var(--bg-3); color: var(--ink-2); border-color: var(--border); }
     .mp-btn-secondary:hover { border-color: var(--border-2); color: var(--ink); }
-    .mp-btn-danger { background: var(--red-lt); color: var(--red); border-color: #fca5a5; }
+    .mp-btn-danger { background: var(--red-lt); color: var(--red-2); border-color: #5a2a2a; }
     .mp-btn-danger:hover { background: var(--red); color: #fff; border-color: var(--red); }
 
     /* ── CONFIRM MODAL ── */
@@ -293,8 +294,8 @@ const injectStyles = () => {
       align-items: center; justify-content: center; background: var(--bg); gap: 16px;
     }
     .mp-spinner {
-      width: 44px; height: 44px; border: 3px solid var(--blue-lt);
-      border-top-color: var(--blue-2); border-radius: 100%;
+      width: 44px; height: 44px; border: 3px solid var(--border);
+      border-top-color: var(--ink); border-radius: 100%;
       animation: mp-spin .8s linear infinite;
     }
     .mp-loader-text { font-family: 'Syne', sans-serif; font-size: 13px; color: var(--ink-3); font-weight: 700; letter-spacing: .06em; }
@@ -308,7 +309,7 @@ const injectStyles = () => {
   document.head.appendChild(s);
 };
 
-/* ─── TRANSLATIONS (fixed duplicate 'description' key) ───────── */
+/* ─── TRANSLATIONS ──────────────────────────────────────────────── */
 const TRANSLATIONS = {
   en: {
     manageProducts: 'Manage Products',
@@ -322,7 +323,7 @@ const TRANSLATIONS = {
     category: 'Category',
     pricePerUnit: 'Price / Unit (RWF)',
     quantity: 'Quantity',
-    descriptionLabel: 'Description',      // ← fixed: was duplicate key
+    descriptionLabel: 'Description',
     actions: 'Actions',
     save: 'Save Product',
     cancel: 'Cancel',
@@ -337,7 +338,7 @@ const TRANSLATIONS = {
     back: '← Back',
     basicInfo: 'Basic Info',
     categoryStock: 'Category & Stock',
-    pricing: 'Pricing',                   // ← fixed: step 3 label corrected
+    pricing: 'Pricing',
     summary: 'Summary',
     nameRequired: 'Product name is required',
     categoryRequired: 'Category is required',
@@ -347,6 +348,7 @@ const TRANSLATIONS = {
     backToDashboard: 'Back to Dashboard',
     noProducts: 'No products found. Add one to get started.',
     logoutConfirm: 'Yes, Logout',
+    errorSaving: 'Save failed:',
   },
   fr: {
     manageProducts: 'Gérer les Produits',
@@ -385,6 +387,7 @@ const TRANSLATIONS = {
     backToDashboard: 'Tableau de bord',
     noProducts: 'Aucun produit trouvé.',
     logoutConfirm: 'Oui, déconnecter',
+    errorSaving: 'Échec de la sauvegarde :',
   },
   rw: {
     manageProducts: 'Gereri Ibicuruzwa',
@@ -423,6 +426,7 @@ const TRANSLATIONS = {
     backToDashboard: 'Subira kuri dashubode',
     noProducts: 'Nta bicuruzwa bibonetse.',
     logoutConfirm: 'Yego, sohoka',
+    errorSaving: 'Kubika byananiranye:',
   },
 };
 
@@ -437,6 +441,7 @@ const EMPTY_FORM = { product_name: '', category: '', price_per_unit: '', quantit
 /* ─── MAIN COMPONENT ─────────────────────────────────────────── */
 export default function ManageProducts() {
   const { user, logout } = useAuth();
+  const navigate = useNavigate(); // 👈 added for back navigation
 
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -523,18 +528,8 @@ export default function ManageProducts() {
     setCurrentStep(s => s - 1);
   };
 
-  /* ── SAVE ── */
+  /* ── SAVE WITH ENHANCED ERROR HANDLING ── */
   const handleSave = async () => {
-    // ✅ FIX: Role guard — only farmer or admin can create/edit products.
-    // The backend returns 403 if user_type is 'buyer' or 'customer'.
-    const allowedRoles = ['farmer', 'admin'];
-    if (!allowedRoles.includes(user?.type)) {
-      setErrors({
-        _global: `Permission denied. Your account type "${user?.type}" cannot create or edit products. Please log in as a farmer or admin.`,
-      });
-      return;
-    }
-
     // Validate all steps before saving
     const allErrs = {
       ...validateStep(1, formData),
@@ -553,9 +548,7 @@ export default function ManageProducts() {
         price_per_unit: Number(formData.price_per_unit),
         quantity_available: Number(formData.quantity_available),
         description: formData.description.trim(),
-        // ✅ FIX: Include farmer_id from the logged-in user.
-        // Many backends require this to associate the product with a farmer.
-        // The backend's 403 often fires when this field is missing or mismatched.
+        // Include user id if your backend expects it
         farmer_id: user?.id,
       };
 
@@ -570,21 +563,30 @@ export default function ManageProducts() {
       fetchProducts();
     } catch (err) {
       console.error('Save failed', err);
-      const serverMsg = err?.response?.data?.message || err?.response?.data?.error;
-      const status = err?.response?.status;
 
-      let friendlyMsg = serverMsg || err.message || 'Save failed. Please try again.';
-
-      // ✅ FIX: Give a clear human-readable message for common HTTP errors
-      if (status === 403) {
-        friendlyMsg = `Permission denied (403). Your account (${user?.type}) is not allowed to perform this action. Contact your administrator.`;
-      } else if (status === 401) {
-        friendlyMsg = 'Session expired (401). Please log out and log back in.';
-      } else if (status === 400) {
-        friendlyMsg = serverMsg || 'Invalid data (400). Check all fields and try again.';
+      // Extract the most useful error message
+      let errorMessage = t.errorSaving;
+      if (err.response) {
+        // The server responded with a status code outside 2xx
+        errorMessage += ` ${err.response.status}`;
+        if (err.response.data?.message) {
+          errorMessage += `: ${err.response.data.message}`;
+        } else if (err.response.data?.error) {
+          errorMessage += `: ${err.response.data.error}`;
+        } else if (typeof err.response.data === 'string') {
+          errorMessage += `: ${err.response.data}`;
+        } else {
+          errorMessage += ` — ${err.response.statusText}`;
+        }
+      } else if (err.request) {
+        // The request was made but no response received
+        errorMessage += ' No response from server. Check your network.';
+      } else {
+        // Something else
+        errorMessage += ` ${err.message}`;
       }
 
-      setErrors({ _global: friendlyMsg });
+      alert(errorMessage);
     }
   };
 
@@ -625,30 +627,12 @@ export default function ManageProducts() {
 
   return (
     <div className="mp-root">
-
-      {/* ── ROLE GUARD BANNER — shown if user cannot manage products ── */}
-      {user && !['farmer', 'admin'].includes(user?.type) && (
-        <div style={{
-          background: '#fef3c7', border: '1.5px solid #fcd34d',
-          borderRadius: 'var(--radius-lg)', padding: '14px 20px',
-          marginBottom: 20, display: 'flex', alignItems: 'center', gap: 12,
-          fontSize: 13, fontWeight: 600, color: '#92400e',
-        }}>
-          <span style={{ fontSize: 20 }}>⚠️</span>
-          <div>
-            <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, marginBottom: 2 }}>
-              Access Restricted
-            </div>
-            Your account type <strong>"{user?.type}"</strong> cannot create, edit, or delete products.
-            Please log in as a <strong>farmer</strong> or <strong>admin</strong> to manage products.
-          </div>
-        </div>
-      )}
       <header className="mp-topbar">
         <div className="mp-topbar-left">
-          <Link to="/admin" className="mp-back-btn">
+          {/* 👇 Replaced Link with button that goes back in history */}
+          <button className="mp-back-btn" onClick={() => navigate(-1)}>
             ← {t.backToDashboard}
-          </Link>
+          </button>
           <h1 className="mp-page-title">{t.manageProducts}</h1>
         </div>
 
@@ -707,13 +691,7 @@ export default function ManageProducts() {
       <div className="mp-card">
         <div className="mp-card-header">
           <h2 className="mp-card-title">🌽 {t.manageProducts}</h2>
-          <button
-            className="mp-add-btn"
-            onClick={openAdd}
-            disabled={!['farmer', 'admin'].includes(user?.type)}
-            style={!['farmer', 'admin'].includes(user?.type) ? { opacity: 0.4, cursor: 'not-allowed', transform: 'none', boxShadow: 'none' } : {}}
-            title={!['farmer', 'admin'].includes(user?.type) ? `Your role "${user?.type}" cannot add products` : ''}
-          >
+          <button className="mp-add-btn" onClick={openAdd}>
             + {t.addProduct}
           </button>
         </div>
@@ -748,20 +726,10 @@ export default function ManageProducts() {
                       </td>
                       <td>
                         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                          <button
-                            className="mp-btn-edit"
-                            onClick={() => openEdit(p)}
-                            disabled={!['farmer', 'admin'].includes(user?.type)}
-                            style={!['farmer', 'admin'].includes(user?.type) ? { opacity: 0.35, cursor: 'not-allowed' } : {}}
-                          >
+                          <button className="mp-btn-edit" onClick={() => openEdit(p)}>
                             ✏️ {t.edit}
                           </button>
-                          <button
-                            className="mp-btn-delete"
-                            onClick={() => setDeleteTarget(p)}
-                            disabled={!['farmer', 'admin'].includes(user?.type)}
-                            style={!['farmer', 'admin'].includes(user?.type) ? { opacity: 0.35, cursor: 'not-allowed' } : {}}
-                          >
+                          <button className="mp-btn-delete" onClick={() => setDeleteTarget(p)}>
                             🗑 {t.delete}
                           </button>
                         </div>
@@ -885,7 +853,6 @@ export default function ManageProducts() {
                     </div>
                   ))}
                 </div>
-                {errors._global && <div className="mp-error" style={{ marginTop: 10 }}>⚠ {errors._global}</div>}
               </div>
             )}
 
@@ -942,7 +909,6 @@ export default function ManageProducts() {
           </div>
         </div>
       )}
-
     </div>
   );
 }

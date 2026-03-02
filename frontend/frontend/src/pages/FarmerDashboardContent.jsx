@@ -1,4 +1,3 @@
-// CustomerDashboardContent.jsx — Professional Redesign
 import { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import {
@@ -8,378 +7,700 @@ import {
   getArticles,
 } from "../services/api";
 
-/* ─── INJECT STYLES ─────────────────────────────────────────── */
+/* ─── INJECT STYLES ────────────────────────────────────────────── */
 const injectStyles = () => {
-  if (document.getElementById("cd-pro-css")) return;
+  if (document.getElementById("cd-modern-css")) return;
   const s = document.createElement("style");
-  s.id = "cd-pro-css";
+  s.id = "cd-modern-css";
   s.textContent = `
     @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,300&display=swap');
 
-    *, *::before, *::after { box-sizing: border-box; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --ink:       #0a0d14;
-      --ink-2:     #3a3f52;
-      --ink-3:     #7a8099;
-      --surface:   #ffffff;
-      --surface-2: #f4f6fb;
-      --surface-3: #eceef6;
-      --accent:    #2f54eb;
-      --accent-lt: #e8edff;
-      --accent-2:  #00c9a7;
-      --accent-2lt:#e0faf4;
-      --warn:      #f5a623;
-      --warn-lt:   #fef3d7;
-      --danger:    #e8455a;
-      --danger-lt: #fde8eb;
-      --border:    #e4e8f2;
-      --radius-sm: 10px;
-      --radius:    16px;
-      --radius-lg: 24px;
-      --shadow-sm: 0 1px 4px rgba(10,13,20,.06);
-      --shadow:    0 4px 20px rgba(10,13,20,.08);
-      --shadow-lg: 0 12px 40px rgba(10,13,20,.12);
+      --bg:        #0f172a;
+      --bg-2:      #1a243a;
+      --bg-3:      #233049;
+      --border:    #334155;
+      --border-2:  #475569;
+      --ink:       #f1f5f9;
+      --ink-2:     #cbd5e1;
+      --ink-3:     #94a3b8;
+      --primary:   #10b981;
+      --primary-lt: rgba(16, 185, 129, 0.1);
+      --primary-glow: rgba(16, 185, 129, 0.2);
+      --accent:    #06b6d4;
+      --accent-lt: rgba(6, 182, 212, 0.1);
+      --accent-glow: rgba(6, 182, 212, 0.2);
+      --warn:      #f59e0b;
+      --warn-lt:   rgba(245, 158, 11, 0.1);
+      --danger:    #ef4444;
+      --danger-lt: rgba(239, 68, 68, 0.1);
+      --radius:    14px;
+      --radius-lg: 20px;
+      --shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+      --shadow-lg: 0 40px 80px rgba(0, 0, 0, 0.5);
     }
 
-    body { background: var(--surface-2); }
+    html, body { background: var(--bg); }
 
     .cd-root {
       font-family: 'DM Sans', sans-serif;
       color: var(--ink);
       min-height: 100vh;
-      background: var(--surface-2);
+      background: var(--bg);
+      display: grid;
+      grid-template-columns: 80px 1fr;
+      gap: 0;
     }
 
     /* ── SIDEBAR ── */
     .cd-sidebar {
-      position: fixed; top: 0; left: 0; bottom: 0;
-      width: 72px;
-      background: var(--ink);
-      display: flex; flex-direction: column; align-items: center;
-      padding: 24px 0;
+      grid-row: 1 / -1;
+      background: linear-gradient(180deg, #0a0f1a 0%, #162137 100%);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px 0;
+      gap: 12px;
+      position: sticky;
+      top: 0;
       z-index: 100;
-      gap: 8px;
     }
+
     .cd-logo {
-      width: 40px; height: 40px; background: var(--accent);
+      width: 48px;
+      height: 48px;
+      background: linear-gradient(135deg, #10b981 0%, #06b6d4 100%);
       border-radius: 12px;
-      display: flex; align-items: center; justify-content: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       font-family: 'Syne', sans-serif;
-      font-weight: 800; color: #fff; font-size: 18px;
-      margin-bottom: 28px;
-      box-shadow: 0 4px 14px rgba(47,84,235,.45);
+      font-weight: 800;
+      color: #fff;
+      font-size: 20px;
+      margin-bottom: 16px;
+      box-shadow: 0 8px 24px rgba(16, 185, 129, 0.3);
     }
+
     .cd-nav-item {
-      width: 48px; height: 48px; border-radius: 14px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 18px; cursor: pointer; transition: all .2s;
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      cursor: pointer;
+      transition: all .25s cubic-bezier(.4, 0, .2, 1);
       color: var(--ink-3);
       position: relative;
     }
-    .cd-nav-item:hover, .cd-nav-item.active {
-      background: rgba(255,255,255,.1); color: #fff;
+
+    .cd-nav-item:hover {
+      background: var(--primary-lt);
+      color: var(--primary);
+      transform: translateY(-2px);
     }
-    .cd-nav-item.active::before {
-      content: '';
-      position: absolute; left: -4px;
-      width: 4px; height: 28px;
-      background: var(--accent);
-      border-radius: 0 4px 4px 0;
+
+    .cd-nav-item.active {
+      background: linear-gradient(135deg, var(--primary-lt), var(--accent-lt));
+      color: var(--primary);
+      box-shadow: 0 0 20px var(--primary-glow);
     }
+
     .cd-nav-spacer { flex: 1; }
 
-    /* ── MAIN ── */
+    /* ── MAIN LAYOUT ── */
     .cd-main {
-      margin-left: 72px;
+      display: flex;
+      flex-direction: column;
       min-height: 100vh;
-      display: flex; flex-direction: column;
     }
 
     /* ── TOPBAR ── */
     .cd-topbar {
-      height: 72px;
-      background: var(--surface);
+      height: 80px;
+      background: linear-gradient(180deg, rgba(26, 36, 58, 0.8) 0%, rgba(26, 36, 58, 0.5) 100%);
       border-bottom: 1px solid var(--border);
-      display: flex; align-items: center;
+      display: flex;
+      align-items: center;
       padding: 0 32px;
-      gap: 16px;
-      position: sticky; top: 0; z-index: 50;
+      gap: 20px;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      backdrop-filter: blur(10px);
     }
+
     .cd-topbar-title {
       font-family: 'Syne', sans-serif;
-      font-weight: 700; font-size: 20px;
+      font-weight: 700;
+      font-size: 22px;
       color: var(--ink);
       flex: 1;
     }
-    .cd-topbar-title span { color: var(--accent); }
+
+    .cd-topbar-title span { color: var(--primary); }
+
+    .cd-lang-wrapper { position: relative; }
+
     .cd-lang-btn {
-      height: 36px; padding: 0 14px;
+      height: 40px;
+      padding: 0 16px;
       border-radius: 100px;
       border: 1.5px solid var(--border);
-      background: var(--surface);
-      font-size: 13px; font-weight: 600;
+      background: rgba(255, 255, 255, 0.05);
+      font-size: 13px;
+      font-weight: 600;
       color: var(--ink-2);
-      cursor: pointer; display: flex; align-items: center; gap-6px;
-      gap: 6px; transition: all .2s;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all .25s;
       font-family: 'DM Sans', sans-serif;
+      backdrop-filter: blur(10px);
     }
-    .cd-lang-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+    .cd-lang-btn:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+      background: rgba(16, 185, 129, 0.1);
+    }
+
     .cd-lang-dropdown {
-      position: absolute; top: calc(100% + 8px); right: 0;
-      width: 160px; background: var(--surface);
+      position: absolute;
+      top: calc(100% + 8px);
+      right: 0;
+      width: 180px;
+      background: var(--bg-2);
       border: 1.5px solid var(--border);
-      border-radius: var(--radius); padding: 6px;
-      box-shadow: var(--shadow-lg); z-index: 200;
+      border-radius: var(--radius-lg);
+      padding: 8px;
+      box-shadow: var(--shadow-lg);
+      z-index: 200;
+      backdrop-filter: blur(10px);
     }
+
     .cd-lang-option {
-      padding: 9px 12px; border-radius: 10px;
-      font-size: 13px; font-weight: 500; cursor: pointer;
-      display: flex; align-items: center; gap: 8px;
-      transition: all .15s; color: var(--ink-2);
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all .15s;
+      color: var(--ink-2);
     }
-    .cd-lang-option:hover { background: var(--surface-2); color: var(--ink); }
-    .cd-lang-option.sel { background: var(--accent-lt); color: var(--accent); font-weight: 600; }
+
+    .cd-lang-option:hover {
+      background: rgba(16, 185, 129, 0.1);
+      color: var(--primary);
+    }
+
+    .cd-lang-option.sel {
+      background: var(--primary-lt);
+      color: var(--primary);
+      font-weight: 600;
+    }
 
     .cd-user-pill {
-      display: flex; align-items: center; gap: 10px;
-      padding: 4px 4px 4px 14px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 6px 6px 6px 16px;
       border: 1.5px solid var(--border);
       border-radius: 100px;
-      background: var(--surface);
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(10px);
     }
-    .cd-user-email { font-size: 13px; color: var(--ink-2); font-weight: 500; max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    .cd-user-email {
+      font-size: 13px;
+      color: var(--ink-2);
+      font-weight: 500;
+      max-width: 150px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
     .cd-avatar {
-      width: 36px; height: 36px; border-radius: 100%;
-      object-fit: cover; border: 2px solid var(--accent-lt);
+      width: 40px;
+      height: 40px;
+      border-radius: 100%;
+      object-fit: cover;
+      border: 2px solid var(--primary);
+      box-shadow: 0 0 12px var(--primary-glow);
     }
+
     .cd-logout-btn {
-      width: 36px; height: 36px; border-radius: 100%;
+      width: 40px;
+      height: 40px;
+      border-radius: 100%;
       border: 1.5px solid var(--border);
-      background: transparent;
-      display: flex; align-items: center; justify-content: center;
-      cursor: pointer; font-size: 15px; transition: all .2s;
+      background: rgba(255, 255, 255, 0.05);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 18px;
+      transition: all .25s;
       color: var(--ink-3);
     }
-    .cd-logout-btn:hover { background: var(--danger-lt); border-color: var(--danger); color: var(--danger); }
+
+    .cd-logout-btn:hover {
+      background: var(--danger-lt);
+      border-color: var(--danger);
+      color: var(--danger);
+    }
 
     /* ── PAGE BODY ── */
-    .cd-body { padding: 32px; flex: 1; }
-
-    /* ── SECTION HEADER ── */
-    .cd-section-header {
-      display: flex; align-items: center; justify-content: space-between;
-      margin-bottom: 20px;
-    }
-    .cd-section-title {
-      font-family: 'Syne', sans-serif;
-      font-weight: 700; font-size: 15px; color: var(--ink);
-      display: flex; align-items: center; gap: 8px;
-    }
-    .cd-section-title .ico { font-size: 16px; }
-    .cd-badge {
-      padding: 3px 10px; border-radius: 100px;
-      font-size: 11px; font-weight: 700;
-      background: var(--surface-2); color: var(--ink-3);
-      border: 1px solid var(--border);
+    .cd-body {
+      padding: 32px;
+      flex: 1;
+      overflow-y: auto;
     }
 
     /* ── STAT CARDS ── */
-    .cd-stats { display: grid; grid-template-columns: repeat(3,1fr); gap: 20px; margin-bottom: 28px; }
-    @media(max-width:900px) { .cd-stats { grid-template-columns: 1fr 1fr; } }
-    @media(max-width:600px) { .cd-stats { grid-template-columns: 1fr; } }
+    .cd-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 24px;
+      margin-bottom: 32px;
+    }
 
     .cd-stat {
-      background: var(--surface);
+      background: linear-gradient(135deg, rgba(26, 36, 58, 0.8) 0%, rgba(35, 48, 73, 0.6) 100%);
       border: 1px solid var(--border);
       border-radius: var(--radius-lg);
-      padding: 24px 26px;
-      position: relative; overflow: hidden;
-      box-shadow: var(--shadow-sm);
-      transition: transform .25s, box-shadow .25s;
+      padding: 28px;
+      position: relative;
+      overflow: hidden;
+      transition: all .3s cubic-bezier(.4, 0, .2, 1);
+      backdrop-filter: blur(10px);
     }
-    .cd-stat:hover { transform: translateY(-3px); box-shadow: var(--shadow); }
-    .cd-stat-accent { border-top: 3px solid var(--accent); }
-    .cd-stat-accent2 { border-top: 3px solid var(--accent-2); }
-    .cd-stat-warn { border-top: 3px solid var(--warn); }
+
+    .cd-stat:hover {
+      transform: translateY(-8px);
+      border-color: var(--primary);
+      box-shadow: 0 12px 40px var(--primary-glow);
+    }
+
+    .cd-stat::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--primary), var(--accent));
+    }
+
     .cd-stat-glow {
-      position: absolute; top: -20px; right: -20px;
-      width: 80px; height: 80px; border-radius: 100%;
-      opacity: .08;
+      position: absolute;
+      top: -30px;
+      right: -30px;
+      width: 100px;
+      height: 100px;
+      border-radius: 100%;
+      opacity: 0.1;
+      pointer-events: none;
     }
+
+    .cd-stat-glow-primary { background: var(--primary); }
     .cd-stat-glow-accent { background: var(--accent); }
-    .cd-stat-glow-accent2 { background: var(--accent-2); }
     .cd-stat-glow-warn { background: var(--warn); }
-    .cd-stat-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--ink-3); margin-bottom: 10px; }
-    .cd-stat-value { font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 800; color: var(--ink); line-height: 1; }
-    .cd-stat-icon { position: absolute; bottom: 18px; right: 20px; font-size: 26px; opacity: .3; }
+
+    .cd-stat-label {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      color: var(--ink-3);
+      margin-bottom: 12px;
+    }
+
+    .cd-stat-value {
+      font-family: 'Syne', sans-serif;
+      font-size: 32px;
+      font-weight: 800;
+      color: var(--ink);
+      line-height: 1;
+      margin-bottom: 12px;
+    }
+
+    .cd-stat-icon {
+      position: absolute;
+      bottom: 20px;
+      right: 24px;
+      font-size: 32px;
+      opacity: 0.2;
+    }
 
     /* ── GRID ── */
-    .cd-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 28px; }
-    @media(max-width:900px) { .cd-grid-2 { grid-template-columns: 1fr; } }
+    .cd-grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      margin-bottom: 32px;
+    }
+
+    @media(max-width: 1200px) {
+      .cd-grid-2 { grid-template-columns: 1fr; }
+    }
 
     /* ── CARD ── */
     .cd-card {
-      background: var(--surface);
+      background: linear-gradient(135deg, rgba(26, 36, 58, 0.8) 0%, rgba(35, 48, 73, 0.6) 100%);
       border: 1px solid var(--border);
       border-radius: var(--radius-lg);
-      padding: 26px 28px;
-      box-shadow: var(--shadow-sm);
+      padding: 28px;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+      backdrop-filter: blur(10px);
+      transition: all .3s ease;
+    }
+
+    .cd-card:hover {
+      border-color: var(--border-2);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+    }
+
+    /* ── SECTION HEADER ── */
+    .cd-section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .cd-section-title {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 16px;
+      color: var(--ink);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .cd-section-title .ico { font-size: 20px; }
+
+    .cd-badge {
+      padding: 4px 12px;
+      border-radius: 100px;
+      font-size: 12px;
+      font-weight: 700;
+      background: var(--primary-lt);
+      color: var(--primary);
+      border: 1px solid rgba(16, 185, 129, 0.3);
     }
 
     /* ── TABLE ── */
-    .cd-table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
-    .cd-table thead tr { border-bottom: 2px solid var(--border); }
-    .cd-table thead th {
-      text-align: left; padding: 0 12px 12px;
-      font-size: 11px; font-weight: 700; text-transform: uppercase;
-      letter-spacing: .08em; color: var(--ink-3);
+    .cd-overflow { overflow-x: auto; }
+
+    .cd-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13.5px;
     }
-    .cd-table tbody tr { border-bottom: 1px solid var(--surface-3); transition: background .15s; }
+
+    .cd-table thead tr { border-bottom: 2px solid var(--border); }
+
+    .cd-table thead th {
+      text-align: left;
+      padding: 14px 12px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--ink-3);
+    }
+
+    .cd-table tbody tr {
+      border-bottom: 1px solid rgba(52, 81, 121, 0.5);
+      transition: all .2s;
+    }
+
     .cd-table tbody tr:last-child { border-bottom: none; }
-    .cd-table tbody tr:hover { background: var(--surface-2); }
-    .cd-table td { padding: 13px 12px; color: var(--ink-2); vertical-align: middle; }
-    .cd-table td.bold { font-weight: 600; color: var(--ink); }
-    .cd-table td.accent { color: var(--accent); font-weight: 600; }
+
+    .cd-table tbody tr:hover {
+      background: rgba(16, 185, 129, 0.08);
+      border-color: var(--primary);
+    }
+
+    .cd-table td {
+      padding: 14px 12px;
+      color: var(--ink-2);
+      vertical-align: middle;
+    }
+
+    .cd-table td.bold {
+      font-weight: 600;
+      color: var(--ink);
+    }
+
+    .cd-table td.accent { color: var(--primary); font-weight: 600; }
 
     .cd-pill {
-      display: inline-flex; align-items: center;
-      padding: 3px 10px; border-radius: 100px;
-      font-size: 11px; font-weight: 700; border: 1.5px solid;
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 12px;
+      border-radius: 100px;
+      font-size: 11px;
+      font-weight: 700;
+      border: 1.5px solid;
     }
-    .cd-pill-ok { background: var(--accent-2lt); color: #028f75; border-color: #a3e8dc; }
-    .cd-pill-pending { background: var(--warn-lt); color: #b07100; border-color: #f5d380; }
-    .cd-pill-fail { background: var(--danger-lt); color: var(--danger); border-color: #f5adb8; }
+
+    .cd-pill-ok { background: var(--primary-lt); color: var(--primary); border-color: rgba(16, 185, 129, 0.3); }
+    .cd-pill-pending { background: var(--warn-lt); color: var(--warn); border-color: rgba(245, 158, 11, 0.3); }
+    .cd-pill-fail { background: var(--danger-lt); color: var(--danger); border-color: rgba(239, 68, 68, 0.3); }
 
     .cd-buy-btn {
-      padding: 6px 14px; border-radius: 100px;
-      background: var(--accent); color: #fff;
-      font-size: 12px; font-weight: 700;
-      border: none; cursor: pointer;
+      padding: 8px 16px;
+      border-radius: 100px;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      color: #fff;
+      font-size: 12px;
+      font-weight: 700;
+      border: none;
+      cursor: pointer;
       font-family: 'DM Sans', sans-serif;
-      transition: all .2s;
-      box-shadow: 0 2px 8px rgba(47,84,235,.25);
+      transition: all .25s;
+      box-shadow: 0 4px 12px var(--primary-glow);
     }
-    .cd-buy-btn:hover { background: #1c3fd4; transform: scale(1.04); box-shadow: 0 4px 14px rgba(47,84,235,.35); }
+
+    .cd-buy-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px var(--primary-glow);
+    }
 
     /* ── WEATHER ITEM ── */
     .cd-weather-item {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 12px 14px; border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 16px;
+      border-radius: var(--radius);
       border: 1px solid var(--border);
-      background: var(--surface-2);
-      margin-bottom: 8px; transition: all .2s;
+      background: rgba(16, 185, 129, 0.05);
+      margin-bottom: 10px;
+      transition: all .25s;
     }
+
     .cd-weather-item:last-child { margin-bottom: 0; }
-    .cd-weather-item:hover { background: var(--accent-lt); border-color: #c0ccf8; }
-    .cd-weather-item .wi-left { display: flex; align-items: center; gap: 10px; }
-    .cd-weather-item .wi-district { font-weight: 600; font-size: 13.5px; color: var(--ink); }
+
+    .cd-weather-item:hover {
+      background: var(--primary-lt);
+      border-color: var(--primary);
+    }
+
+    .cd-weather-item .wi-left { display: flex; align-items: center; gap: 12px; }
+    .cd-weather-item .wi-district { font-weight: 600; font-size: 14px; color: var(--ink); }
     .cd-weather-item .wi-cond { font-size: 12px; color: var(--ink-3); }
-    .cd-weather-item .wi-temp { font-family: 'Syne', sans-serif; font-weight: 700; color: var(--accent); font-size: 15px; }
-    .cd-weather-item .wi-rain { font-size: 11px; color: var(--ink-3); text-align: right; }
+    .cd-weather-item .wi-temp { font-family: 'Syne', sans-serif; font-weight: 700; color: var(--primary); font-size: 16px; }
+    .cd-weather-item .wi-rain { font-size: 12px; color: var(--ink-3); text-align: right; }
 
     /* ── ARTICLE ITEM ── */
     .cd-article-item {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 12px 14px; border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 16px;
+      border-radius: var(--radius);
       border: 1px solid var(--border);
-      background: var(--surface-2);
-      margin-bottom: 8px; text-decoration: none;
-      transition: all .2s; color: inherit;
+      background: rgba(6, 182, 212, 0.05);
+      margin-bottom: 10px;
+      text-decoration: none;
+      transition: all .25s;
+      color: inherit;
     }
+
     .cd-article-item:last-child { margin-bottom: 0; }
-    .cd-article-item:hover { background: var(--accent-2lt); border-color: #8de8d5; }
-    .cd-article-item .art-title { font-size: 13.5px; font-weight: 600; color: var(--ink); }
+
+    .cd-article-item:hover {
+      background: var(--accent-lt);
+      border-color: var(--accent);
+    }
+
+    .cd-article-item .art-title { font-size: 14px; font-weight: 600; color: var(--ink); }
     .cd-article-date {
-      font-size: 11px; font-weight: 700;
-      padding: 3px 9px; border-radius: 100px;
-      background: var(--surface); border: 1px solid var(--border);
-      color: var(--accent-2); white-space: nowrap; flex-shrink: 0;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 100px;
+      background: var(--bg-3);
+      border: 1px solid var(--border);
+      color: var(--accent);
+      white-space: nowrap;
+      flex-shrink: 0;
     }
 
     /* ── FOOTER ── */
     .cd-footer {
-      background: var(--ink); color: var(--ink-3);
-      padding: 20px 32px;
-      display: flex; flex-wrap: wrap; gap: 16px;
-      align-items: center; justify-content: center;
-      font-size: 12.5px;
+      background: linear-gradient(180deg, #0a0f1a 0%, #162137 100%);
+      color: var(--ink-3);
+      padding: 24px 32px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      border-top: 1px solid var(--border);
     }
-    .cd-footer a { color: #8fa8ff; text-decoration: none; transition: color .15s; }
-    .cd-footer a:hover { color: #fff; }
-    .cd-footer-sep { width: 3px; height: 3px; border-radius: 100%; background: var(--ink-2); }
+
+    .cd-footer a { color: var(--primary); text-decoration: none; transition: color .15s; }
+    .cd-footer a:hover { color: var(--accent); }
+    .cd-footer-sep { width: 2px; height: 2px; border-radius: 100%; background: var(--border); }
 
     /* ── MODAL ── */
     .cd-modal-overlay {
-      position: fixed; inset: 0;
-      background: rgba(10,13,20,.4); backdrop-filter: blur(6px);
-      display: flex; align-items: center; justify-content: center; z-index: 999;
-      animation: fadeOverlay .2s ease;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 999;
+      animation: fadeOverlay .25s ease;
     }
+
     @keyframes fadeOverlay { from { opacity: 0; } to { opacity: 1; } }
+
     .cd-modal {
-      background: var(--surface); border-radius: 24px;
-      padding: 36px 40px; width: 90%; max-width: 380px;
-      box-shadow: 0 24px 60px rgba(10,13,20,.22);
-      animation: scaleModal .25s cubic-bezier(.34,1.56,.64,1);
+      background: linear-gradient(135deg, rgba(26, 36, 58, 0.95) 0%, rgba(35, 48, 73, 0.95) 100%);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 40px 44px;
+      width: 90%;
+      max-width: 420px;
+      box-shadow: var(--shadow-lg);
+      animation: scaleModal .3s cubic-bezier(.34, 1.56, .64, 1);
+      backdrop-filter: blur(10px);
     }
-    @keyframes scaleModal { from { opacity:0; transform:scale(.9); } to { opacity:1; transform:scale(1); } }
-    .cd-modal h3 { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; color: var(--ink); margin: 0 0 8px; }
-    .cd-modal p { color: var(--ink-3); font-size: 14px; margin: 0 0 28px; }
+
+    @keyframes scaleModal { from { opacity: 0; transform: scale(.92); } to { opacity: 1; transform: scale(1); } }
+
+    .cd-modal h3 {
+      font-family: 'Syne', sans-serif;
+      font-size: 24px;
+      font-weight: 800;
+      color: var(--ink);
+      margin: 0 0 10px;
+    }
+
+    .cd-modal p {
+      color: var(--ink-3);
+      font-size: 14px;
+      margin: 0 0 32px;
+      line-height: 1.6;
+    }
+
     .cd-modal-btns { display: flex; gap: 12px; }
+
     .cd-modal-yes {
-      flex: 1; padding: 13px;
-      background: var(--danger); color: #fff;
-      border: none; border-radius: 12px;
-      font-family: 'Syne', sans-serif; font-weight: 700; font-size: 14px;
-      cursor: pointer; transition: all .2s;
+      flex: 1;
+      padding: 14px;
+      background: linear-gradient(135deg, var(--danger), #d93554);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all .25s;
+      box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
     }
-    .cd-modal-yes:hover { background: #c73248; }
+
+    .cd-modal-yes:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(239, 68, 68, 0.4);
+    }
+
     .cd-modal-cancel {
-      flex: 1; padding: 13px;
-      background: var(--surface-2); color: var(--ink-2);
-      border: 1.5px solid var(--border); border-radius: 12px;
-      font-family: 'Syne', sans-serif; font-weight: 700; font-size: 14px;
-      cursor: pointer; transition: all .2s;
+      flex: 1;
+      padding: 14px;
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--ink-2);
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all .25s;
     }
-    .cd-modal-cancel:hover { background: var(--surface-3); }
 
-    /* ── LOADER ── */
-    .cd-loader { display: grid; grid-template-columns: repeat(3,1fr); gap: 20px; padding: 32px; }
-    .cd-skel {
-      height: 120px; border-radius: var(--radius-lg);
-      background: linear-gradient(90deg, var(--surface-3) 25%, var(--surface-2) 50%, var(--surface-3) 75%);
-      background-size: 200% 100%;
-      animation: shimmer 1.4s infinite;
+    .cd-modal-cancel:hover {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: var(--border-2);
     }
-    @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
 
-    /* ── FADE ANIMS ── */
-    .cd-fade { animation: fadeUp .4s ease forwards; }
-    @keyframes fadeUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+    /* ── ANIMATIONS ── */
+    .cd-fade {
+      animation: fadeUp .5s ease forwards;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
     .cd-delay-1 { animation-delay: .05s; opacity: 0; }
     .cd-delay-2 { animation-delay: .1s; opacity: 0; }
     .cd-delay-3 { animation-delay: .15s; opacity: 0; }
-    .cd-delay-4 { animation-delay: .2s; opacity: 0; }
-    .cd-delay-5 { animation-delay: .25s; opacity: 0; }
 
-    /* overflow fix */
-    .cd-overflow { overflow-x: auto; }
+    /* ── LOADER ── */
+    .cd-loader {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+      padding: 32px;
+    }
+
+    .cd-skel {
+      height: 140px;
+      border-radius: var(--radius-lg);
+      background: linear-gradient(90deg, rgba(52, 81, 121, 0.3) 25%, rgba(52, 81, 121, 0.5) 50%, rgba(52, 81, 121, 0.3) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.6s infinite;
+    }
+
+    @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+    /* Scrollbar styling */
+    .cd-body::-webkit-scrollbar { width: 8px; }
+    .cd-body::-webkit-scrollbar-track { background: transparent; }
+    .cd-body::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 4px;
+    }
+    .cd-body::-webkit-scrollbar-thumb:hover { background: var(--border-2); }
   `;
   document.head.appendChild(s);
 };
 
-/* ─── TRANSLATIONS ─────────────────────────────────────────── */
+/* ─── TRANSLATIONS ─────────────────────────────────────────────── */
 const TRANSLATIONS = {
   en: {
-    customerPortal: "Customer Portal",
+    customerPortal: "Dashboard",
     totalSpent: "Total Spent",
     ordersPlaced: "Orders Placed",
     productsBought: "Products Bought",
     availableProducts: "Available Products",
     purchaseHistory: "Purchase History",
     weatherUpdates: "Weather Updates",
-    farmingTips: "Farming Tips",
+    farmingTips: "Farming Tips & Advice",
     items: "items",
     transactions: "transactions",
     new: "New",
@@ -387,10 +708,10 @@ const TRANSLATIONS = {
     confirmLogout: "Are you sure you want to logout?",
     cancel: "Cancel",
     yes: "Logout",
-    welcome: "Welcome back",
+    welcome: "Welcome",
   },
   fr: {
-    customerPortal: "Portail Client",
+    customerPortal: "Tableau de Bord",
     totalSpent: "Total Dépensé",
     ordersPlaced: "Commandes",
     productsBought: "Produits Achetés",
@@ -408,7 +729,7 @@ const TRANSLATIONS = {
     welcome: "Bienvenue",
   },
   rw: {
-    customerPortal: "Urubuga rw'Abaguzi",
+    customerPortal: "Dashubode",
     totalSpent: "Amafaranga Yakoreshejwe",
     ordersPlaced: "Ibyaguzwe",
     productsBought: "Ibicuruzwa Byaguzwe",
@@ -436,7 +757,7 @@ const LANG_OPTIONS = [
 const NAV_ITEMS = [
   { icon: "🏠", key: "home", active: true },
   { icon: "🛒", key: "shop" },
-  { icon: "📋", key: "orders" },
+  { icon: "📦", key: "orders" },
   { icon: "🌤️", key: "weather" },
   { icon: "🌱", key: "tips" },
 ];
@@ -444,8 +765,8 @@ const NAV_ITEMS = [
 const WEATHER_ICON = { Sunny: "☀️", Rainy: "🌧️", "Partly Cloudy": "⛅" };
 
 /* ─── SUB-COMPONENTS ───────────────────────────────────────── */
-const StatCard = ({ label, value, icon, variant = "accent" }) => (
-  <div className={`cd-stat cd-stat-${variant}`}>
+const StatCard = ({ label, value, icon, variant = "primary" }) => (
+  <div className="cd-stat cd-fade">
     <div className={`cd-stat-glow cd-stat-glow-${variant}`} />
     <div className="cd-stat-label">{label}</div>
     <div className="cd-stat-value">{value}</div>
@@ -460,19 +781,21 @@ const ProductTable = ({ products }) => (
         <tr>
           <th>Product</th>
           <th>Price</th>
-          <th></th>
+          <th style={{ width: "80px" }}></th>
         </tr>
       </thead>
       <tbody>
-        {products.map((p, i) => (
-          <tr key={p.product_id || i}>
-            <td className="bold">{p.name}</td>
-            <td className="accent">RWF {p.price?.toLocaleString()}</td>
-            <td>
-              <button className="cd-buy-btn">Buy</button>
-            </td>
-          </tr>
-        ))}
+        {products.length === 0 ? (
+          <tr><td colSpan="3" style={{ textAlign: "center", padding: "24px", color: "var(--ink-3)" }}>No products available</td></tr>
+        ) : (
+          products.map((p, i) => (
+            <tr key={p.product_id || i}>
+              <td className="bold">{p.product_name || p.name || "Product"}</td>
+              <td className="accent">RWF {Number(p.price_per_unit || p.price || 0).toLocaleString()}</td>
+              <td><button className="cd-buy-btn">Buy</button></td>
+            </tr>
+          ))
+        )}
       </tbody>
     </table>
   </div>
@@ -491,27 +814,31 @@ const TransactionTable = ({ transactions }) => (
         </tr>
       </thead>
       <tbody>
-        {transactions.map((t, i) => {
-          const pill =
-            t.status === "Completed"
-              ? "cd-pill-ok"
-              : t.status === "Pending"
-              ? "cd-pill-pending"
-              : "cd-pill-fail";
-          return (
-            <tr key={t.transaction_id || i}>
-              <td className="bold">{t.product_name || "Product"}</td>
-              <td>{t.quantity}</td>
-              <td className="accent">RWF {t.total_price?.toLocaleString()}</td>
-              <td>{t.date}</td>
-              <td>
-                <span className={`cd-pill ${pill}`}>
-                  {t.status || "Completed"}
-                </span>
-              </td>
-            </tr>
-          );
-        })}
+        {transactions.length === 0 ? (
+          <tr><td colSpan="5" style={{ textAlign: "center", padding: "24px", color: "var(--ink-3)" }}>No transactions yet</td></tr>
+        ) : (
+          transactions.map((t, i) => {
+            const pill =
+              t.status === "Completed"
+                ? "cd-pill-ok"
+                : t.status === "Pending"
+                ? "cd-pill-pending"
+                : "cd-pill-fail";
+            return (
+              <tr key={t.transaction_id || i}>
+                <td className="bold">{t.product_name || "Product"}</td>
+                <td>{t.quantity}</td>
+                <td className="accent">RWF {Number(t.total_price || 0).toLocaleString()}</td>
+                <td>{t.date || "N/A"}</td>
+                <td>
+                  <span className={`cd-pill ${pill}`}>
+                    {t.status || "Completed"}
+                  </span>
+                </td>
+              </tr>
+            );
+          })
+        )}
       </tbody>
     </table>
   </div>
@@ -563,7 +890,8 @@ export default function CustomerDashboardContent() {
 
   if (loading) {
     return (
-      <div className="cd-root" style={{ marginLeft: 72 }}>
+      <div className="cd-root">
+        <div className="cd-sidebar" />
         <div className="cd-loader">
           {[1, 2, 3, 4, 5, 6].map((i) => (
             <div key={i} className="cd-skel" />
@@ -577,7 +905,7 @@ export default function CustomerDashboardContent() {
     <div className="cd-root">
       {/* ── SIDEBAR ── */}
       <nav className="cd-sidebar">
-        <div className="cd-logo">A</div>
+        <div className="cd-logo">🌾</div>
         {NAV_ITEMS.map((n) => (
           <div
             key={n.key}
@@ -608,12 +936,9 @@ export default function CustomerDashboardContent() {
           </div>
 
           {/* Language switcher */}
-          <div style={{ position: "relative" }}>
+          <div className="cd-lang-wrapper">
             <button className="cd-lang-btn" onClick={() => setShowLangDD(!showLangDD)}>
-              {currentLang?.flag} {currentLang?.label}
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <path d="M6 9l6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
+              {currentLang?.flag} {currentLang?.code.toUpperCase()}
             </button>
             {showLangDD && (
               <div className="cd-lang-dropdown">
@@ -639,7 +964,7 @@ export default function CustomerDashboardContent() {
             <img
               src={
                 user?.profilePicture ||
-                `https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(user?.name || "User")}&backgroundColor=2f54eb`
+                `https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(user?.name || "User")}&backgroundColor=10b981`
               }
               alt="avatar"
               className="cd-avatar"
@@ -649,20 +974,19 @@ export default function CustomerDashboardContent() {
 
         {/* ── PAGE BODY ── */}
         <div className="cd-body">
-
           {/* STATS */}
-          <div className="cd-stats cd-fade cd-delay-1">
+          <div className="cd-stats">
             <StatCard
               label={t.totalSpent}
               value={`RWF ${totalSpent.toLocaleString()}`}
               icon="💰"
-              variant="accent"
+              variant="primary"
             />
             <StatCard
               label={t.ordersPlaced}
               value={transactions.length}
               icon="📦"
-              variant="accent2"
+              variant="accent"
             />
             <StatCard
               label={t.productsBought}
@@ -673,8 +997,8 @@ export default function CustomerDashboardContent() {
           </div>
 
           {/* PRODUCTS + TRANSACTIONS */}
-          <div className="cd-fade cd-delay-2" style={{ marginBottom: 24 }}>
-            <div className="cd-card" style={{ marginBottom: 20 }}>
+          <div className="cd-grid-2 cd-fade cd-delay-1">
+            <div className="cd-card">
               <div className="cd-section-header">
                 <div className="cd-section-title">
                   <span className="ico">🌽</span> {t.availableProducts}
@@ -696,7 +1020,7 @@ export default function CustomerDashboardContent() {
           </div>
 
           {/* WEATHER + ARTICLES */}
-          <div className="cd-grid-2 cd-fade cd-delay-3">
+          <div className="cd-grid-2 cd-fade cd-delay-2">
             {/* Weather */}
             <div className="cd-card">
               <div className="cd-section-header">
@@ -704,23 +1028,27 @@ export default function CustomerDashboardContent() {
                   <span className="ico">🌤️</span> {t.weatherUpdates}
                 </div>
               </div>
-              {weather.map((w, i) => (
-                <div className="cd-weather-item" key={i}>
-                  <div className="wi-left">
-                    <span style={{ fontSize: 22 }}>
-                      {WEATHER_ICON[w.condition] || "☁️"}
-                    </span>
+              {weather.length === 0 ? (
+                <div style={{ padding: "20px", textAlign: "center", color: "var(--ink-3)" }}>No weather data available</div>
+              ) : (
+                weather.map((w, i) => (
+                  <div className="cd-weather-item" key={i}>
+                    <div className="wi-left">
+                      <span style={{ fontSize: 24 }}>
+                        {WEATHER_ICON[w.condition] || "☁️"}
+                      </span>
+                      <div>
+                        <div className="wi-district">{w.district}</div>
+                        <div className="wi-cond">{w.condition}</div>
+                      </div>
+                    </div>
                     <div>
-                      <div className="wi-district">{w.district}</div>
-                      <div className="wi-cond">{w.condition}</div>
+                      <div className="wi-temp">{w.temperature}°C</div>
+                      <div className="wi-rain">{w.rainfall_probability}% rain</div>
                     </div>
                   </div>
-                  <div>
-                    <div className="wi-temp">{w.temperature}°C</div>
-                    <div className="wi-rain">{w.rainfall_probability}% rain</div>
-                  </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
 
             {/* Articles */}
@@ -730,16 +1058,20 @@ export default function CustomerDashboardContent() {
                   <span className="ico">🌱</span> {t.farmingTips}
                 </div>
               </div>
-              {articles.map((a, i) => (
-                <a
-                  key={i}
-                  href={`/advisory/${a.article_id}`}
-                  className="cd-article-item"
-                >
-                  <span className="art-title">{a.title}</span>
-                  <span className="cd-article-date">{a.date || t.new}</span>
-                </a>
-              ))}
+              {articles.length === 0 ? (
+                <div style={{ padding: "20px", textAlign: "center", color: "var(--ink-3)" }}>No articles available</div>
+              ) : (
+                articles.map((a, i) => (
+                  <a
+                    key={i}
+                    href={`/advisory/${a.article_id}`}
+                    className="cd-article-item"
+                  >
+                    <span className="art-title">{a.title}</span>
+                    <span className="cd-article-date">{a.date || t.new}</span>
+                  </a>
+                ))
+              )}
             </div>
           </div>
         </div>
@@ -751,16 +1083,6 @@ export default function CustomerDashboardContent() {
           <span>👤 Mordekai</span>
           <span className="cd-footer-sep" />
           <a href="https://mordekai.vercel.app" target="_blank" rel="noreferrer">🌐 Portfolio</a>
-          <span className="cd-footer-sep" />
-          <a href="https://instagram.com/Mordekai_320" target="_blank" rel="noreferrer">📸 Instagram</a>
-          <span className="cd-footer-sep" />
-          <a href="https://twitter.com/Mordekai668896" target="_blank" rel="noreferrer">🐦 Twitter</a>
-          <span className="cd-footer-sep" />
-          <a href="https://facebook.com/UM.Mordekai" target="_blank" rel="noreferrer">👍 Facebook</a>
-          <span className="cd-footer-sep" />
-          <a href="https://tiktok.com/@Mordekai320" target="_blank" rel="noreferrer">🎵 TikTok</a>
-          <span className="cd-footer-sep" />
-          <a href="https://wa.me/250796381024" target="_blank" rel="noreferrer" style={{ color: "#4ade80" }}>📱 WhatsApp</a>
         </footer>
       </div>
 
@@ -771,7 +1093,7 @@ export default function CustomerDashboardContent() {
           onClick={() => setShowLogout(false)}
         >
           <div className="cd-modal" onClick={(e) => e.stopPropagation()}>
-            <h3>{t.logout}</h3>
+            <h3>🚪 {t.logout}</h3>
             <p>{t.confirmLogout}</p>
             <div className="cd-modal-btns">
               <button className="cd-modal-yes" onClick={async () => await logout()}>

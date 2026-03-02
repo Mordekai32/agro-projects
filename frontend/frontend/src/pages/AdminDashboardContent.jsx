@@ -1,4 +1,4 @@
-// AdminDashboardContent.jsx — Dark Industrial Redesign
+// AdminDashboardContent.jsx — Dark Industrial Redesign (title changed to "Admin Dashboard")
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -633,7 +633,7 @@ export default function AdminDashboardContent() {
           {/* Page header */}
           <div className="adm-page-header adm-anim adm-d1">
             <div className="adm-page-eyebrow">Overview</div>
-            <div className="adm-page-title">Dashboard</div>
+            <div className="adm-page-title">Admin Dashboard</div> {/* 👈 Changed from "Dashboard" to "Admin Dashboard" */}
             <div className="adm-page-sub">
               {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
             </div>

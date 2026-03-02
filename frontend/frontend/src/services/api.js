@@ -5,11 +5,9 @@ import axios from 'axios';
  * Supports both CRA (REACT_APP_API_URL) and Vite (VITE_API_URL).
  */
 function getApiBaseUrl() {
-  // Vite
   if (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_URL) {
     return import.meta.env.VITE_API_URL;
   }
-  // CRA / webpack
   if (typeof process !== 'undefined' && process.env?.REACT_APP_API_URL) {
     return process.env.REACT_APP_API_URL;
   }
@@ -25,7 +23,6 @@ if (!API_BASE_URL) {
   );
   API_BASE_URL = 'http://localhost:5000/api';
 } else {
-  // Remove trailing slash to avoid double slashes
   API_BASE_URL = API_BASE_URL.replace(/\/+$/, '');
 }
 
@@ -50,6 +47,9 @@ api.interceptors.request.use(
 
     if (token) {
       config.headers['Authorization'] = `Bearer ${token}`;
+      console.log(`[API] Attached token to ${config.method.toUpperCase()} ${config.url}`);
+    } else {
+      console.warn(`[API] No token found for ${config.method.toUpperCase()} ${config.url}`);
     }
 
     return config;
@@ -62,19 +62,24 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     const status = error.response?.status;
+    const url = error.config?.url;
+    const method = error.config?.method?.toUpperCase();
 
     if (status === 401) {
       console.error(
-        '401 Unauthorized — token missing, expired, or invalid.\n' +
-        'Ensure your AuthContext stores the token in localStorage under the key "token".'
+        `[API] 401 Unauthorized — ${method} ${url}\n` +
+        'Token missing, expired, or invalid.\n' +
+        'Ensure your AuthContext stores the token under localStorage key "token".'
       );
-      // Uncomment to auto-logout on token expiry:
-      // localStorage.removeItem('token');
-      // window.location.href = '/login';
     }
 
     if (status === 403) {
-      console.error('403 Forbidden — insufficient permissions for this action.');
+      console.error(
+        `[API] 403 Forbidden — ${method} ${url}\n` +
+        'Insufficient permissions for this action.\n' +
+        'Check the response data for details:',
+        error.response?.data
+      );
     }
 
     return Promise.reject(error);
@@ -82,14 +87,15 @@ api.interceptors.response.use(
 );
 
 // ─── Helper: call this right after login to store token ──────────────────────
-// Usage in AuthContext: setAuthToken(response.data.token)
 export const setAuthToken = (token) => {
   if (token) {
     localStorage.setItem('token', token);
     api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    console.log('[API] Token stored and default header set.');
   } else {
     localStorage.removeItem('token');
     delete api.defaults.headers.common['Authorization'];
+    console.log('[API] Token cleared.');
   }
 };
 
@@ -131,26 +137,15 @@ export const updateProduct = (id, productData) => api.put(`/products/${id}`, pro
 export const deleteProduct = (id) => api.delete(`/products/${id}`);
 
 // ========== Transactions ==========
-// Admin: get all transactions
 export const getAllTransactions = () => api.get('/transactions/all');
-
-// Farmer/Buyer: get own transactions
 export const getMyTransactions = () => api.get('/transactions/me');
-
-// Create a new transaction
 export const createTransaction = (transactionData) => api.post('/transactions', transactionData);
-
-// Get a single transaction by ID
 export const getTransaction = (id) => api.get(`/transactions/${id}`);
-
-// Update or delete a transaction
 export const updateTransaction = (id, transactionData) => api.put(`/transactions/${id}`, transactionData);
 export const deleteTransaction = (id) => api.delete(`/transactions/${id}`);
 
-// Alias for backward compatibility
 export const getTransactions = getAllTransactions;
 
-// Optional: get recent transactions (client-side limit)
 export const getRecentTransactions = async (limit = 5) => {
   const response = await getAllTransactions();
   return { ...response, data: response.data.slice(0, limit) };
@@ -170,7 +165,6 @@ export const createAdvisory = (articleData) => api.post('/advisory', articleData
 export const updateAdvisory = (id, articleData) => api.put(`/advisory/${id}`, articleData);
 export const deleteAdvisory = (id) => api.delete(`/advisory/${id}`);
 
-// Aliases for dashboards
 export const getArticles = getAdvisory;
 export const getArticle = getAdvisoryArticle;
 

@@ -19,9 +19,7 @@ export const AuthProvider = ({ children }) => {
     storedUser = null;
   }
 
-  // ✅ FIX: On rehydration, restore the token into axios headers immediately.
-  // Without this, a page refresh clears the axios default header even though
-  // the token is still in localStorage, causing 401s after refresh.
+  // ✅ Restore token into axios headers immediately on page refresh
   if (storedUser?.token) {
     setAuthToken(storedUser.token);
   }
@@ -47,8 +45,7 @@ export const AuthProvider = ({ children }) => {
       email: data.email,
     };
 
-    // ✅ FIX: Save token separately under the key "token" so api.js interceptor
-    // can find it with localStorage.getItem("token"). Also sets axios default header.
+    // ✅ Store token and set axios default header
     setAuthToken(userData.token);
 
     // Save the full user object for UI use
@@ -60,8 +57,6 @@ export const AuthProvider = ({ children }) => {
 
   // ── LOGOUT ─────────────────────────────────────────────────────────────────
   const logout = useCallback(() => {
-    // ✅ FIX: Clear both the user object AND the token key, and remove the
-    // axios Authorization header so no stale token leaks into future requests.
     clearAuthToken();
     localStorage.removeItem("user");
     setUser(null);
